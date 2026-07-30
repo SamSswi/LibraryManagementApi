@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "fpfEUs+6Fqw=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\Sam's PC\\Desktop\\ASP .Net projects\\LibraryManagement\\LibraryManagement.Api\\LibraryManagement.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Sam's PC\\.nuget\\packages\\microsoft.aspnetcore.openapi\\10.0.10\\microsoft.aspnetcore.openapi.10.0.10.nupkg.sha512",
+    "C:\\Users\\Sam's PC\\.nuget\\packages\\microsoft.openapi\\2.7.5\\microsoft.openapi.2.7.5.nupkg.sha512"
+  ],
+  "logs": []
+}
