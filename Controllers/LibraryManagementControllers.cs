@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,14 @@ public class LibraryManagementController(AppDbContext context) : ControllerBase
     {
         var books = _context.Book.ToList();
         return books;
+    }
+
+    [HttpPost ("add_book")]
+    public IActionResult AddBook([FromForm] Book book)
+    {
+        _context.Add(book);
+        _context.SaveChanges();
+        return Ok(book);
     }
 
 
