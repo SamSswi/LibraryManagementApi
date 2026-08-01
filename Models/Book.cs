@@ -17,8 +17,9 @@ public class Book
     [RegularExpression(@"^(\d{10}|\d{13})$")]
     public string ISBN {get; set;} = "";
     
+    [Required]
     [Range(1454, 2050)]
-    public required int PublicationYear {get; set;}
+    public int PublicationYear {get; set;}
     public string Genre {get; set;} = "";
 
     [Required]
@@ -30,4 +31,6 @@ public class Book
     [Required]
     public  int AvailableCopies{get; set;}
     // might have to separate book and book copy model where will be available copies
+
+    public ICollection<AuthorBook> AuthorBooks {get; set;} = [];
 }
