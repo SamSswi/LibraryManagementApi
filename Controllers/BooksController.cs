@@ -4,10 +4,12 @@ using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
+namespace LibraryManagement.Api.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
 
-public class LibraryManagementController(AppDbContext context) : ControllerBase
+public class BookController(AppDbContext context) : ControllerBase
 {
     private readonly AppDbContext _context = context;
 
@@ -66,6 +68,4 @@ public class LibraryManagementController(AppDbContext context) : ControllerBase
         _context.SaveChanges();
         return Ok();
     }
-
-
 }

@@ -8,7 +8,7 @@ public class Author
     public int Id {get; private set;}
 
     [Required]
-    public string Name = "";
+    public string Name {get; set;}= "";
 
-    public ICollection<AuthorBook> AuthorBooks {get; set;} = [];  
+    public List<AuthorBook> AuthorBooks {get;} = [];  
 }

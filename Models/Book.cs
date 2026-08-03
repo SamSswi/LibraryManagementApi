@@ -32,5 +32,5 @@ public class Book
     public  int AvailableCopies{get; set;}
     // might have to separate book and book copy model where will be available copies
 
-    public ICollection<AuthorBook> AuthorBooks {get; set;} = [];
+    public List<AuthorBook> AuthorBooks {get;} = [];
 }
