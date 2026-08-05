@@ -10,5 +10,5 @@ public class Author
     [Required]
     public string Name {get; set;}= "";
 
-    public List<AuthorBook> AuthorBooks {get;} = [];  
+    public List<AuthorBook> AuthorBooks {get; set;} = [];  
 }

@@ -1,6 +1,8 @@
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.Models;
+using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
@@ -18,33 +20,47 @@ public class AuthorController(AppDbContext context) : ControllerBase
     }
 
     [HttpGet ("all_authors")]
-    public List<Author> GetAllAuthors()
+    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors()
     {
-        return [.. _context.Author];
+        var authors = await _context.Author.Select(a => new ReadAuthorDTO
+            {
+                Id = a.Id,
+                Name = a.Name
+            }).ToListAsync();
+        return Ok(authors);
     }
 
     [HttpGet("get_author_by_id")]
-    public Author GetAuthorById(int id)
+    public ActionResult<ReadAuthorDTO> GetAuthorById(int id)
     {
         var currAuthor = FindAuthorById(id);
-        return currAuthor;
+        var author =  new ReadAuthorDTO
+        {
+            Id = currAuthor.Id,
+            Name = currAuthor.Name
+        };
+        return author;
     }
 
     [HttpPost ("add_author")]
-    public IActionResult AddAuthor([FromForm] Author author)
+    public async Task<IActionResult> AddAuthor([FromForm] CreateAuthorDTO dto)
     {
-        _context.Add(author);
-        _context.SaveChanges();
+        var author = new Author
+        {
+            Name = dto.Name
+        };
+        _context.Author.Add(author);
+        await _context.SaveChangesAsync();
         return Ok(author);
     }
 
     [HttpPut ("edit_author")]
-    public IActionResult EditAuthor(int id, Author author)
+    public async Task<IActionResult> EditAuthor(int id, EditAuthorDTO dto)
     {
         var currAuth = FindAuthorById(id);
-        currAuth.Name = author.Name;
+        currAuth.Name = dto.Name;
 
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return Ok(currAuth);
     }
 
