@@ -1,8 +1,10 @@
 using System.Collections.Immutable;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.Models;
+using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
@@ -22,41 +24,66 @@ public class BookController(AppDbContext context) : ControllerBase
     // add book not found functionality
     
     [HttpGet("all_books")]
-    public List<Book> GetBooks()
+    public async Task<ActionResult<ReadBooksDTO>> GetBooks()
     {
-        var books = _context.Book.ToList();
-        return books;
+        var books = await _context.Book.Select(b => new ReadBooksDTO
+        {
+            Id = b.Id,
+            Title = b.Title,
+            ISBN = b.ISBN,
+            PublicationYear = b.PublicationYear,
+            Genre = b.Genre,
+            TotalCopies = b.TotalCopies,
+            AvailableCopies = b.AvailableCopies
+        }).ToListAsync();
+        return Ok(books);
     }
 
     [HttpGet("get_book_by_id")]
-    public Book GetBookById(int id)
+    public ActionResult<ReadBooksDTO> GetBookById(int id)
     {
         var currBook = FindBookById(id);
-        return currBook;
+        var book = new ReadBooksDTO
+        {
+            Id = currBook.Id,
+            Title = currBook.Title,
+            ISBN = currBook.ISBN,
+            PublicationYear = currBook.PublicationYear,
+            Genre = currBook.Genre,
+            TotalCopies = currBook.TotalCopies,
+            AvailableCopies = currBook.AvailableCopies
+        };
+        return book;
 
     }
 
     [HttpPost ("add_book")]
-    public IActionResult AddBook([FromForm] Book book)
+    public async Task<IActionResult> AddBook([FromForm] CreateEditBookDTO dto)
     {
-        _context.Add(book);
-        _context.SaveChanges();
+        var book = new Book
+        {
+            Title = dto.Title,
+            PublicationYear = dto.PublicationYear,
+            TotalCopies = dto.TotalCopies,
+            AvailableCopies = dto.AvailableCopies
+
+        };
+        _context.Book.Add(book);
+        await _context.SaveChangesAsync();
         return Ok(book);
     }
 
+
     [HttpPut ("edit_book")]
-    public IActionResult EditBook(int id, Book book)
+    public async Task<IActionResult> EditBook(int id, CreateEditBookDTO dto)
     {
         var currBook = FindBookById(id);
-        currBook.Title = book.Title;
-        currBook.ISBN = book.ISBN;
-        currBook.PublicationYear = book.PublicationYear;
-        currBook.Genre = book.Genre;
-        currBook.Author = book.Author;
-        currBook.TotalCopies = book.TotalCopies;
-        currBook.AvailableCopies = book.AvailableCopies;
+        currBook.Title = dto.Title;
+        currBook.PublicationYear = dto.PublicationYear;
+        currBook.TotalCopies = dto.TotalCopies;
+        currBook.AvailableCopies = dto.AvailableCopies;
 
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return Ok(currBook);
     }
 

@@ -52,10 +52,6 @@ namespace LibraryManagement.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Author")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("AvailableCopies")
                         .HasColumnType("INTEGER");
 
