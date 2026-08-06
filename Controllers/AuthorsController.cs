@@ -43,7 +43,7 @@ public class AuthorController(AppDbContext context) : ControllerBase
     }
 
     [HttpPost ("add_author")]
-    public async Task<IActionResult> AddAuthor([FromForm] CreateAuthorDTO dto)
+    public async Task<IActionResult> AddAuthor([FromForm] CreateEditAuthorDTO dto)
     {
         var author = new Author
         {
@@ -55,7 +55,7 @@ public class AuthorController(AppDbContext context) : ControllerBase
     }
 
     [HttpPut ("edit_author")]
-    public async Task<IActionResult> EditAuthor(int id, EditAuthorDTO dto)
+    public async Task<IActionResult> EditAuthor(int id, CreateEditAuthorDTO dto)
     {
         var currAuth = FindAuthorById(id);
         currAuth.Name = dto.Name;

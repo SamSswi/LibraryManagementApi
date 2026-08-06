@@ -78,7 +78,11 @@ public class AuthorBookController(AppDbContext context) : ControllerBase
         };
         _context.Add(ab);
         await _context.SaveChangesAsync();
-        return Ok(ab);
+        return Ok(new AuthorBookReadResponseDTO
+        {
+            AuthorId = ab.AuthorId,
+            BookId = ab.BookId
+        });
     }
 
     [HttpDelete ("authorbooks/{authorId}/{bookId}")]

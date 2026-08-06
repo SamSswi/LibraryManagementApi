@@ -29,8 +29,7 @@ public class Book
     public int TotalCopies {get; set;}
     
     [Required]
-    public  int AvailableCopies{get; set;}
-    // might have to separate book and book copy model where will be available copies
+    public  int AvailableCopies{get; set;} // calculate available copies total copies - borrowed records of this book
 
     public List<AuthorBook> AuthorBooks {get; set;} = [];
 }

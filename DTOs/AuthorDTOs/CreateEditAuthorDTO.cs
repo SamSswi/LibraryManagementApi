@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.Api.DTO;
 
-public class CreateAuthorDTO
+public class CreateEditAuthorDTO
 {
     [Required]
     public string Name {get; set;} = "";
