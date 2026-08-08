@@ -11,7 +11,7 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
-public class BookController(AppDbContext context) : ControllerBase
+public class BookController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
 
@@ -24,9 +24,9 @@ public class BookController(AppDbContext context) : ControllerBase
     // add book not found functionality
     
     [HttpGet("all_books")]
-    public async Task<ActionResult<ReadBooksDTO>> GetBooks()
+    public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks(int page = 1, int pageSize = 10)
     {
-        var books = await _context.Book.Select(b => new ReadBooksDTO
+        var query = _context.Book.Select(b => new ReadBooksDTO
         {
             Id = b.Id,
             Title = b.Title,
@@ -35,8 +35,18 @@ public class BookController(AppDbContext context) : ControllerBase
             Genre = b.Genre,
             TotalCopies = b.TotalCopies,
             AvailableCopies = b.AvailableCopies
-        }).ToListAsync();
-        return Ok(books);
+        });
+        var totalBooks = await query.CountAsync();
+
+        Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalBooks);
+
+        var booksPerPage = await query
+            .OrderBy(b => b.Id)
+            .Skip((normData["page"] - 1) * normData["pageSize"])
+            .Take(normData["pageSize"])
+            .ToListAsync();
+
+        return Ok(booksPerPage);
     }
 
     [HttpGet("get_book_by_id")]
@@ -95,4 +105,21 @@ public class BookController(AppDbContext context) : ControllerBase
         _context.SaveChanges();
         return Ok();
     }
+
+    // [HttpPost ("seed-books")]
+    // public async Task<IActionResult> SeedBooks()
+    // {
+    //     for(int i = 0; i < 100; i++)
+    //     {
+    //         _context.Book.Add(new Book
+    //         {
+    //             Title = $"Book{i}",
+    //             PublicationYear = 1460 + i,
+    //             TotalCopies = 3,
+    //             AvailableCopies = 0
+    //         });
+    //     }
+    //     await _context.SaveChangesAsync();
+    //     return Ok();
+    // }
 }

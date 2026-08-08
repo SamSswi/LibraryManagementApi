@@ -3,13 +3,14 @@ using LibraryManagement.Api.Models;
 using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
 
-public class AuthorController(AppDbContext context) : ControllerBase
+public class AuthorController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
 
@@ -20,14 +21,25 @@ public class AuthorController(AppDbContext context) : ControllerBase
     }
 
     [HttpGet ("all_authors")]
-    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors()
+    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors(int page = 1, int pageSize = 10)
     {
-        var authors = await _context.Author.Select(a => new ReadAuthorDTO
+        var query = _context.Author.Select(a => new ReadAuthorDTO
             {
                 Id = a.Id,
                 Name = a.Name
-            }).ToListAsync();
-        return Ok(authors);
+            });
+        
+        var totalAuthors = await query.CountAsync();
+        
+        Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalAuthors);
+
+        var authorsPerPage = await query
+            .OrderBy(a => a.Id)
+            .Skip((normData["page"] - 1) * normData["pageSize"])
+            .Take(normData["pageSize"])
+            .ToListAsync();
+
+        return Ok(authorsPerPage);
     }
 
     [HttpGet("get_author_by_id")]
@@ -72,5 +84,19 @@ public class AuthorController(AppDbContext context) : ControllerBase
         _context.SaveChanges();
         return Ok();
     }
+
+    // [HttpPost ("seed-author")]
+    // public async Task<IActionResult> SeedAuthor()
+    // {
+    //     for(int i = 0; i < 100; i++)
+    //     {
+    //         _context.Author.Add(new Author
+    //         {
+    //             Name = $"Name{i}"
+    //         });
+    //     }
+    //     await _context.SaveChangesAsync();
+    //     return Ok();
+    // }
     
 }

@@ -13,21 +13,32 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
-public class AuthorBookController(AppDbContext context) : ControllerBase
+public class AuthorBookController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
 
     [HttpGet ("all-books-and-authors")]
-    public async Task<ActionResult<List<AuthorBookReadDTO>>> AllAuthorBooks()
+    public async Task<ActionResult<IEnumerable<AuthorBookReadDTO>>> AllAuthorBooks(int page = 1, int pageSize = 10)
     {
-        var authorBooks = await _context.AuthorBooks.Select(ab => new AuthorBookReadDTO
+        var query = _context.AuthorBooks.Select(ab => new AuthorBookReadDTO
         {
             AuthorId = ab.AuthorId,
             AuthorName = ab.Author.Name,
             BookId = ab.BookId,
             BookTitle = ab.Book.Title,
-        }).ToListAsync();
-        return Ok(authorBooks);
+        });
+        var totalAuthorBooks = await query.CountAsync();
+
+        
+        Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalAuthorBooks);
+
+        var abPerPage = await query
+            .OrderBy(ab => ab.AuthorId)
+            .Skip((normData["page"] - 1) * normData["pageSize"])
+            .Take(normData["pageSize"])
+            .ToListAsync();
+
+        return Ok(abPerPage);
     }
 
     [HttpGet ("author-{authorId}/books")]
@@ -98,5 +109,24 @@ public class AuthorBookController(AppDbContext context) : ControllerBase
         await _context.SaveChangesAsync();
         return Ok();
     }
+
+    // [HttpPost ("seed-authorBook")]
+    // public async Task<IActionResult> SeedAuthorBooks()
+    // {
+    //     int bookId = 12;
+    //     int authorId = 13;
+    //     for(int i = 0; i < 100; i++)
+    //     {
+    //         _context.AuthorBooks.Add(new AuthorBook
+    //         {
+    //             AuthorId = authorId,
+    //             BookId = bookId
+    //         });
+    //         authorId++;
+    //         bookId++;
+    //     }
+    //     await _context.SaveChangesAsync();
+    //     return Ok();
+    // }
     
 }
