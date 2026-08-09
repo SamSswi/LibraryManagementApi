@@ -4,6 +4,7 @@ using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using LibraryManagement.Api.Filter;
 
 namespace LibraryManagement.Api.Controllers;
 
@@ -21,19 +22,26 @@ public class AuthorController(AppDbContext context) : BaseController
     }
 
     [HttpGet ("all_authors")]
-    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors(int page = 1, int pageSize = 10)
+    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors([FromQuery] AuthorFilter filter)
     {
-        var query = _context.Author.Select(a => new ReadAuthorDTO
+        var query = _context.Author.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            query = query.Where(a => a.Name.ToLower().Contains(filter.Search.ToLower()));
+        }
+
+        var authors = query.Select(a => new ReadAuthorDTO
             {
                 Id = a.Id,
                 Name = a.Name
             });
         
-        var totalAuthors = await query.CountAsync();
+        var totalAuthors = await authors.CountAsync();
         
-        Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalAuthors);
+        Dictionary<string, int> normData = NormalizePageData(filter.Page, filter.PageSize, totalAuthors);
 
-        var authorsPerPage = await query
+        var authorsPerPage = await authors
             .OrderBy(a => a.Id)
             .Skip((normData["page"] - 1) * normData["pageSize"])
             .Take(normData["pageSize"])

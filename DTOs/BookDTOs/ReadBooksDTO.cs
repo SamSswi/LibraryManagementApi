@@ -11,4 +11,5 @@ public class ReadBooksDTO
     public int TotalCopies {get; set;}
     public  int AvailableCopies{get; set;}
     // might have to separate book and book copy model where will be available copies
+    // MUST display author name with the book
 }

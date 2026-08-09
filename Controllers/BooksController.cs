@@ -5,6 +5,7 @@ using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using LibraryManagement.Api.Filter;
 
 namespace LibraryManagement.Api.Controllers;
 
@@ -24,9 +25,26 @@ public class BookController(AppDbContext context) : BaseController
     // add book not found functionality
     
     [HttpGet("all_books")]
-    public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks(int page = 1, int pageSize = 10)
+    public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks([FromQuery] BookFilter filter)
     {
-        var query = _context.Book.Select(b => new ReadBooksDTO
+        var query = _context.Book.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            query = query.Where(b => b.Title.ToLower().Contains(filter.Search.ToLower()));
+        }
+
+        if (filter.PublicationYear.HasValue)
+        {
+            query = query.Where(b => b.PublicationYear == filter.PublicationYear.Value);
+        }
+
+        if (filter.AvailableCopies.HasValue)
+        {
+            query = query.Where(b => b.AvailableCopies == filter.AvailableCopies.Value);
+        }
+
+        var books = query.Select(b => new ReadBooksDTO
         {
             Id = b.Id,
             Title = b.Title,
@@ -36,11 +54,11 @@ public class BookController(AppDbContext context) : BaseController
             TotalCopies = b.TotalCopies,
             AvailableCopies = b.AvailableCopies
         });
-        var totalBooks = await query.CountAsync();
+        var totalBooks = await books.CountAsync();
 
-        Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalBooks);
+        Dictionary<string, int> normData = NormalizePageData(filter.Page, filter.PageSize, totalBooks);
 
-        var booksPerPage = await query
+        var booksPerPage = await books
             .OrderBy(b => b.Id)
             .Skip((normData["page"] - 1) * normData["pageSize"])
             .Take(normData["pageSize"])
