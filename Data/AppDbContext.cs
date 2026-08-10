@@ -13,7 +13,12 @@ public class AppDbContext : DbContext
     public DbSet<Book> Book => Set<Book>();
     public DbSet<Author> Author => Set<Author>();
     public DbSet<AuthorBook> AuthorBooks => Set<AuthorBook>();
+    public DbSet<Loan> Loan => Set<Loan>();
+    public DbSet<LoanItem> LoanItem => Set<LoanItem>();
+    public DbSet<User> User=> Set<User>();
 
+
+    // Author <-> Book :: Many to Many 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -31,4 +36,6 @@ public class AppDbContext : DbContext
             .WithMany(sc => sc.AuthorBooks)
             .HasForeignKey(sc => sc.BookId);
     }
+    
+
 }

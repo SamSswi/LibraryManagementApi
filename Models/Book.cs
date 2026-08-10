@@ -32,4 +32,5 @@ public class Book
     public  int AvailableCopies{get; set;} // calculate available copies total copies - borrowed records of this book
 
     public List<AuthorBook> AuthorBooks {get; set;} = [];
+    public ICollection<LoanItem> LoanItems {get; set;} = [];
 }
