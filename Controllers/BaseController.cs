@@ -11,6 +11,7 @@ public abstract class BaseController : ControllerBase
         if(pageSize > totalInstances) pageSize = totalInstances;
         if(page < 1) page = 1;
         else if(page > totalPages) page = totalPages;
+        
         var pageData = new Dictionary<string, int> 
         {
             {"page", page},

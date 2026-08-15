@@ -6,6 +6,6 @@ public class User
 {
     public int Id {get; private set;}
     [Required]
-    public int Name {get; set;}
+    public string Name {get; set;} = "";
     public ICollection<Loan>? Loans {get; set;}
 }

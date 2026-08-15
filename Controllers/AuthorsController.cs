@@ -15,14 +15,14 @@ public class AuthorController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
 
-    private Author FindAuthorById(int id)
+    private async Task<Author> FindAuthorById(int id)
     {
-        var currAuth = _context.Author.FirstOrDefault(m => m.Id == id) ?? throw new KeyNotFoundException("Author Not Found");
+        var currAuth = await _context.Author.FirstOrDefaultAsync(m => m.Id == id) ?? throw new KeyNotFoundException("Author Not Found");
         return currAuth;
     }
 
     [HttpGet ("all_authors")]
-    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors([FromQuery] AuthorFilter filter)
+    public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors([FromQuery] StringFilter filter)
     {
         var query = _context.Author.AsQueryable();
 
@@ -51,9 +51,9 @@ public class AuthorController(AppDbContext context) : BaseController
     }
 
     [HttpGet("get_author_by_id")]
-    public ActionResult<ReadAuthorDTO> GetAuthorById(int id)
+    public async Task<ActionResult<ReadAuthorDTO>> GetAuthorById(int id)
     {
-        var currAuthor = FindAuthorById(id);
+        var currAuthor = await FindAuthorById(id);
         var author =  new ReadAuthorDTO
         {
             Id = currAuthor.Id,
@@ -77,7 +77,7 @@ public class AuthorController(AppDbContext context) : BaseController
     [HttpPut ("edit_author")]
     public async Task<IActionResult> EditAuthor(int id, CreateEditAuthorDTO dto)
     {
-        var currAuth = FindAuthorById(id);
+        var currAuth = await FindAuthorById(id);
         currAuth.Name = dto.Name;
 
         await _context.SaveChangesAsync();
@@ -85,11 +85,11 @@ public class AuthorController(AppDbContext context) : BaseController
     }
 
     [HttpDelete ("delete_author")]
-    public IActionResult DeleteAuthor(int id)
+    public async Task<IActionResult> DeleteAuthor(int id)
     {
-        var currAuth = FindAuthorById(id);
+        var currAuth = await FindAuthorById(id);
         _context.Remove(currAuth);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return Ok();
     }
 

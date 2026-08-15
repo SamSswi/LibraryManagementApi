@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace LibraryManagement.Api.DTO;
 
-public class CreateEditLoanItemDTO
+public class CreateLoanItemDTO
 {
     [Required]
     public int BookId {get; set;}

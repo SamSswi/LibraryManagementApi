@@ -16,9 +16,9 @@ public class BookController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
 
-    private Book FindBookById(int id)
+    private async Task<Book> FindBookById(int id)
     {
-        var currBook = _context.Book.FirstOrDefault(m => m.Id == id) ?? throw new KeyNotFoundException("Book Not Found");
+        var currBook = await _context.Book.FirstOrDefaultAsync(m => m.Id == id) ?? throw new KeyNotFoundException("Book Not Found");
         return currBook;
     }
 
@@ -68,9 +68,9 @@ public class BookController(AppDbContext context) : BaseController
     }
 
     [HttpGet("get_book_by_id")]
-    public ActionResult<ReadBooksDTO> GetBookById(int id)
+    public async Task<ActionResult<ReadBooksDTO>> GetBookById(int id)
     {
-        var currBook = FindBookById(id);
+        var currBook = await FindBookById(id);
         var book = new ReadBooksDTO
         {
             Id = currBook.Id,
@@ -105,7 +105,7 @@ public class BookController(AppDbContext context) : BaseController
     [HttpPut ("edit_book")]
     public async Task<IActionResult> EditBook(int id, CreateEditBookDTO dto)
     {
-        var currBook = FindBookById(id);
+        var currBook = await FindBookById(id);
         currBook.Title = dto.Title;
         currBook.PublicationYear = dto.PublicationYear;
         currBook.TotalCopies = dto.TotalCopies;
@@ -116,11 +116,11 @@ public class BookController(AppDbContext context) : BaseController
     }
 
     [HttpDelete ("delete_book")]
-    public IActionResult DeleteBook(int id)
+    public async Task<IActionResult> DeleteBook(int id)
     {
-        var currBook = FindBookById(id);
+        var currBook = await FindBookById(id);
         _context.Remove(currBook);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
         return Ok();
     }
 
