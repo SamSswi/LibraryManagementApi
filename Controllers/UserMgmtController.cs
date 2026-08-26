@@ -4,6 +4,7 @@ using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Filter;
+using Microsoft.AspNetCore.Identity;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
@@ -12,6 +13,7 @@ namespace LibraryManagement.Api.Controllers;
 public class UserController(AppDbContext context) : BaseController
 {
     private readonly AppDbContext _context = context;
+    public static User user = new();
 
     private async Task<User> FindUserById(int id)
     {
@@ -59,18 +61,6 @@ public class UserController(AppDbContext context) : BaseController
             Name = currUser.Name
         };
         return user;
-    }
-
-    [HttpPost ("add_user")]
-    public async Task<IActionResult> AddUser([FromForm] CreateEditUserDTO dto)
-    {
-        var user = new User
-        {
-            Name = dto.Name
-        };
-        _context.User.Add(user);
-        await _context.SaveChangesAsync();
-        return Ok(user);
     }
 
     [HttpPut ("edit_user")]

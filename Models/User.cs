@@ -8,4 +8,8 @@ public class User
     [Required]
     public string Name {get; set;} = "";
     public ICollection<Loan>? Loans {get; set;}
+    public string PasswordHash {get; set;} = "";
+    public string Role {get; set;} = "";
+    public string? RefreshToken {get; set;}
+    public DateTime? RefreshTokenExpiryTime {get; set;}
 }
