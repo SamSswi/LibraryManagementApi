@@ -3,6 +3,7 @@ using System.Diagnostics;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/[controller]")] //only view for user
 
 public class AuthorBookController(AppDbContext context) : BaseController
 {
@@ -40,7 +41,8 @@ public class AuthorBookController(AppDbContext context) : BaseController
 
         return Ok(abPerPage);
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpGet ("author-{authorId}/books")]
     // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadBooksDTO>>> FindBooksByAnAuthor(int authorId)
@@ -59,7 +61,7 @@ public class AuthorBookController(AppDbContext context) : BaseController
         return Ok(books);
     }
 
-
+    [Authorize (Roles = "Admin")]
     [HttpGet ("book-{bookId}/authors")]
     // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadAuthorDTO>>> FindAuthorsOfABook(int bookId)
@@ -78,7 +80,7 @@ public class AuthorBookController(AppDbContext context) : BaseController
         return Ok(books);
     }
 
-
+    [Authorize (Roles = "Admin")]
     [HttpPost ("add_authorbooks")]
     public async Task<IActionResult> AddAuthorBook([FromForm] CreateAuthorBooksDTO dto)
     {
@@ -96,6 +98,7 @@ public class AuthorBookController(AppDbContext context) : BaseController
         });
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpDelete ("authorbooks/{authorId}/{bookId}")]
     public async Task<IActionResult> DeleteAuthorBookRel(int authorId, int bookId)
     {

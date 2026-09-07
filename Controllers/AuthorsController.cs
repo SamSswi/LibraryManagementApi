@@ -5,10 +5,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibraryManagement.Api.Filter;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController]
+[ApiController] // all authorized besides view
 [Route("api/[controller]")]
 
 public class AuthorController(AppDbContext context) : BaseController
@@ -49,7 +50,8 @@ public class AuthorController(AppDbContext context) : BaseController
 
         return Ok(authorsPerPage);
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpGet("get_author_by_id")]
     public async Task<ActionResult<ReadAuthorDTO>> GetAuthorById(int id)
     {
@@ -62,6 +64,7 @@ public class AuthorController(AppDbContext context) : BaseController
         return author;
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpPost ("add_author")]
     public async Task<IActionResult> AddAuthor([FromForm] CreateEditAuthorDTO dto)
     {
@@ -74,6 +77,7 @@ public class AuthorController(AppDbContext context) : BaseController
         return Ok(author);
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpPut ("edit_author")]
     public async Task<IActionResult> EditAuthor(int id, CreateEditAuthorDTO dto)
     {
@@ -84,6 +88,7 @@ public class AuthorController(AppDbContext context) : BaseController
         return Ok(currAuth);
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpDelete ("delete_author")]
     public async Task<IActionResult> DeleteAuthor(int id)
     {

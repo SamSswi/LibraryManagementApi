@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryManagement.Api.Filter;
+using Microsoft.AspNetCore.Authorization;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController]
+[ApiController] // only view for user
 [Route("api/[controller]")]
 
 public class BookController(AppDbContext context) : BaseController
@@ -67,6 +68,7 @@ public class BookController(AppDbContext context) : BaseController
         return Ok(booksPerPage);
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpGet("get_book_by_id")]
     public async Task<ActionResult<ReadBooksDTO>> GetBookById(int id)
     {
@@ -84,7 +86,8 @@ public class BookController(AppDbContext context) : BaseController
         return book;
 
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpPost ("add_book")]
     public async Task<IActionResult> AddBook([FromForm] CreateEditBookDTO dto)
     {
@@ -101,7 +104,7 @@ public class BookController(AppDbContext context) : BaseController
         return Ok(book);
     }
 
-
+    [Authorize (Roles = "Admin")]
     [HttpPut ("edit_book")]
     public async Task<IActionResult> EditBook(int id, CreateEditBookDTO dto)
     {
@@ -114,7 +117,8 @@ public class BookController(AppDbContext context) : BaseController
         await _context.SaveChangesAsync();
         return Ok(currBook);
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpDelete ("delete_book")]
     public async Task<IActionResult> DeleteBook(int id)
     {

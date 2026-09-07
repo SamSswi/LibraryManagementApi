@@ -5,9 +5,11 @@ using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController]
+[ApiController] // user can view their own data
 [Route("api/[controller]")]
 
 public class UserController(AppDbContext context) : BaseController
@@ -21,6 +23,8 @@ public class UserController(AppDbContext context) : BaseController
         return user;
     }
 
+
+    [Authorize(Roles = "Admin")]
     [HttpGet ("all_users")]
     public async Task<ActionResult<IEnumerable<ReadUserDTO>>> GetAllUsers([FromQuery] StringFilter filter)
     {
@@ -51,6 +55,7 @@ public class UserController(AppDbContext context) : BaseController
         
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpGet("get_user_by_id")]
     public async Task<ActionResult<ReadUserDTO>> GetUserById(int id)
     {
@@ -63,6 +68,22 @@ public class UserController(AppDbContext context) : BaseController
         return user;
     }
 
+    [Authorize]
+    [HttpGet("get_self")]
+    public async Task<ActionResult<ReadUserDTO>> GetSelf()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if(userId is null) return Unauthorized("Token contains no Id");
+        var currUser = await FindUserById(int.Parse(userId));
+        var user =  new ReadUserDTO
+        {
+            Id = currUser.Id,
+            Name = currUser.Name
+        };
+        return user;
+    }
+
+    [Authorize (Roles = "Admin")]
     [HttpPut ("edit_user")]
     public async Task<IActionResult> EditUser(int id, CreateEditUserDTO dto)
     {
@@ -73,6 +94,7 @@ public class UserController(AppDbContext context) : BaseController
         return Ok(currUser);
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpDelete ("delete_user")]
     public async Task<IActionResult> DeleteUser(int id)
     {

@@ -28,7 +28,7 @@ public class AuthController(IAuthService authService) : BaseController
             return BadRequest("Username already exists");
         return Ok(user);
     }
-
+    
     [HttpPost ("login")]
     public async Task<ActionResult<TokenResponesDTO>> Login(CreateEditUserDTO dto)
     {
@@ -38,7 +38,7 @@ public class AuthController(IAuthService authService) : BaseController
         return Ok(response);
     }
 
-    [HttpPost ("refresh-token")]
+    [HttpPost ("refresh-token")] //automatic
     public async Task<ActionResult<TokenResponesDTO>> RefreshToken(RefreshTokenRequestDTO request)
     {
         var response = await authService.RefreshTokensAsync(request);

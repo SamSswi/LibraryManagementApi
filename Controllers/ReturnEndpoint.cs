@@ -1,19 +1,21 @@
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController]
+[ApiController] // admin only
 [Route("api/[controller]")]
 
 public class ReturnEndpoint(AppDbContext context) : ControllerBase
 {
     private readonly AppDbContext _context = context;
 
+    [Authorize (Roles = "Admin")]
     [HttpPut ("return/loan-item-{id}")]
     public async Task<ActionResult> ReturnItem(int id)
     {

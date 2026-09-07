@@ -6,9 +6,11 @@ using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController]
+[ApiController] // user can view their own loans
 [Route("api/[controller]")]
 
 public class LoanController(AppDbContext context) : BaseController
@@ -25,7 +27,8 @@ public class LoanController(AppDbContext context) : BaseController
             ?? throw new KeyNotFoundException("Loan Not Found");
         return loan;
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpGet ("all_loans")]
     public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetAllLoans([FromQuery] LoanFilter filter)
     {
@@ -78,7 +81,40 @@ public class LoanController(AppDbContext context) : BaseController
             
         return Ok(loansPerPage);        
     }
-    
+
+
+    [Authorize]
+    [HttpGet ("own_loans")]
+    public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetOwnLoans()
+    {
+        var uId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if(uId is null) return Unauthorized("Token contains no Id");
+        var query = _context.Loan.AsQueryable();
+        query = query.Where(u => u.UserId == int.Parse(uId));
+
+
+        var loans = query.Select(l => new ReadLoanDTO
+        {
+            Id = l.Id,
+            UserId = l.UserId,
+            UserName = l.User.Name,
+            BorrowedAt = l.BorrowedAt,
+            LoanItems = l.LoanItems.Select(li => new ReadLoanItemDTO
+            {
+                Id = li.Id,
+                DueDate = li.DueDate,
+                ReturnedAt = li.ReturnedAt,
+                BookId = li.BookId,
+                BookTitle = li.Book.Title
+            }).ToList()
+        });
+            
+        return Ok(loans);        
+    }
+
+
+
+    [Authorize (Roles = "Admin")]  
     [HttpGet("get-loan-by-id")]
     public async Task<ActionResult<ReadLoanDTO>> GetLoanById(int id)
     {
@@ -100,6 +136,7 @@ public class LoanController(AppDbContext context) : BaseController
         return loan;
     }
 
+    [Authorize (Roles = "Admin")]
     [HttpPost ("add-loan")]
     public async Task<IActionResult> AddLoan([FromBody] CreateLoanDTO dto)
     {
@@ -134,7 +171,8 @@ public class LoanController(AppDbContext context) : BaseController
           })]
         });
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpPut ("edit-loan")]
     public async Task<IActionResult> EditLoan(int id, EditLoanDTO dto)
     {
@@ -164,7 +202,8 @@ public class LoanController(AppDbContext context) : BaseController
           })]
         });
     }
-
+    
+    [Authorize (Roles = "Admin")]
     [HttpDelete ("delete-loan")]
     public async Task<IActionResult> DeleteLoan(int id)
     {
