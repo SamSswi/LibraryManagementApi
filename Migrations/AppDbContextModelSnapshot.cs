@@ -69,10 +69,6 @@ namespace LibraryManagement.Api.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ISBN")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("PublicationYear")
                         .HasColumnType("int");
 

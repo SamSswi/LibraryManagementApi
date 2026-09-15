@@ -12,10 +12,8 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController] // all authorized besides view
 [Route("api/[controller]")]
 
-public class AuthorController(AppDbContext context) : BaseController
+public class AuthorController(AppDbContext context) : BaseController(context)
 {
-    private readonly AppDbContext _context = context;
-
     private async Task<Author> FindAuthorById(int id)
     {
         var currAuth = await _context.Author.FirstOrDefaultAsync(m => m.Id == id) ?? throw new KeyNotFoundException("Author Not Found");

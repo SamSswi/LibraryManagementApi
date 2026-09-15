@@ -16,7 +16,7 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 
-public class AuthController(IAuthService authService) : BaseController
+public class AuthController(IAuthService authService) : ControllerBase
 {
 
     [HttpPost ("register_user")]

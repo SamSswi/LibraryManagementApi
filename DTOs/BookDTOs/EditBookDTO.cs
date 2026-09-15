@@ -1,7 +1,7 @@
 namespace LibraryManagement.Api.DTO;
 using System.ComponentModel.DataAnnotations;
 
-public class CreateEditBookDTO
+public class EditBookDTO
 {
     [Required]
     [StringLength(200)]
@@ -14,10 +14,9 @@ public class CreateEditBookDTO
     [Range(1454, 2050)]
     public int PublicationYear {get; set;}
 
+    public string Genre {get; set;} = "";
+
     [Required]
     public int TotalCopies {get; set;}
-    
-    [Required]
-    public  int AvailableCopies{get; set;}
     // might have to separate book and book copy model where will be available copies
 }

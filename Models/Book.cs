@@ -13,9 +13,9 @@ public class Book
 
 
     // create a new folder validation with checksum.cs to validate last digit of isbn
-    [Required]
-    [RegularExpression(@"^(\d{10}|\d{13})$")]
-    public string ISBN {get; set;} = "";
+    // [Required]
+    // [RegularExpression(@"^(\d{10}|\d{13})$")]
+    // public string ISBN {get; set;} = "";
     
     [Required]
     [Range(1454, 2050)]

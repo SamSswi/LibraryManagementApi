@@ -12,9 +12,8 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController] // user can view their own data
 [Route("api/[controller]")]
 
-public class UserController(AppDbContext context) : BaseController
+public class UserController(AppDbContext context) : BaseController(context)
 {
-    private readonly AppDbContext _context = context;
     public static User user = new();
 
     private async Task<User> FindUserById(int id)
@@ -72,9 +71,8 @@ public class UserController(AppDbContext context) : BaseController
     [HttpGet("get_self")]
     public async Task<ActionResult<ReadUserDTO>> GetSelf()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if(userId is null) return Unauthorized("Token contains no Id");
-        var currUser = await FindUserById(int.Parse(userId));
+        int userId = ExtractId();
+        var currUser = await FindUserById(userId);
         var user =  new ReadUserDTO
         {
             Id = currUser.Id,

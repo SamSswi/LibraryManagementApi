@@ -14,10 +14,8 @@ namespace LibraryManagement.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")] //only view for user
 
-public class AuthorBookController(AppDbContext context) : BaseController
+public class AuthorBookController(AppDbContext context) : BaseController(context)
 {
-    private readonly AppDbContext _context = context;
-
     [HttpGet ("all-books-and-authors")]
     public async Task<ActionResult<IEnumerable<AuthorBookReadDTO>>> AllAuthorBooks(int page = 1, int pageSize = 10)
     {
