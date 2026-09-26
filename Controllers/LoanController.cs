@@ -12,6 +12,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.VisualBasic;
+using LibraryManagement.Api.GlobalExceptionHandler;
+using System.Text.Json.Serialization;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController] // user can view their own loans
@@ -22,13 +24,41 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
     private async Task CheckBookAvailability(int bookId)
     {
-        var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new KeyNotFoundException("Book not found");
-        if(book.AvailableCopies == 0) throw new InvalidOperationException($"The book {book.Title} is not available for loan");
+        var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new NotFoundException("Book not found");
+        if(book.AvailableCopies == 0) throw new ConflictException($"The book {book.Title} is not available for loan");
 
+    }
+
+    private async Task CheckIfUserHasTheCopy(int bookId, int userId)
+    {
+        var query = _context.Loan.AsQueryable();
+        query = query.Where(u => u.UserId == userId);
+        var duplicateLoans = await query.AnyAsync(l=>l.LoanItems.Any(li => li.BookId == bookId));
+        var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId);
+        string bookTitle = book != null ? book.Title : throw new NotFoundException("The book title is missing");
+        if(duplicateLoans) throw new ConflictException($"The book {bookTitle} - id:{bookId} is already loaned by user {userId}");
+    }
+
+    private DateOnly today = DateOnly.FromDateTime(DateAndTime.Now);
+
+    private string CalcStatus(DateOnly dueDate, DateOnly? dateReturned)
+    {
+        string status =  dateReturned != null ? LoanItemStatus.Returned.ToString() 
+                    : dueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {dueDate}" 
+                    : LoanItemStatus.Overdue.ToString();
+        return status;
+    }
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    private enum LoanItemStatus
+    {
+        Returned,
+        Current,
+        Overdue
     }
     
     [Authorize (Roles = "Admin")]
-    [HttpGet ("all_loans")]
+    [HttpGet ("loans")]
     public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetAllLoans([FromQuery] LoanFilter filter)
     {
         var query = _context.Loan.AsQueryable();
@@ -50,6 +80,24 @@ public class LoanController(AppDbContext context) : BaseController (context)
             query = query.Where(bT => bT.LoanItems.Any(item => item.Book != null && 
                         item.Book.Title.ToLower().Contains(filter.BookTitle.ToLower())));
         }
+        if(filter.Category == LoanItemCategory.All)
+        {
+            query = query.Where(l => l.LoanItems.Any());
+        }
+        
+        if(filter.Category == LoanItemCategory.PastLoans)
+        {
+            query = query.Where(l => l.LoanItems.Any(li => li.ReturnedAt != null));
+        }
+        if(filter.Category == LoanItemCategory.Current)
+        {
+            query = query.Where(l => l.LoanItems.Any(li => li.ReturnedAt == null && today <= li.DueDate));
+        }
+        if(filter.Category == LoanItemCategory.Overdue)
+        {
+            query = query.Where(l => l.LoanItems.Any(li => li.ReturnedAt == null && today > li.DueDate));
+        }
+
 
 
         var loan = query.Select(l => new ReadLoanDTO
@@ -64,7 +112,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
                 DueDate = li.DueDate,
                 ReturnedAt = li.ReturnedAt,
                 BookId = li.BookId,
-                BookTitle = li.Book.Title
+                BookTitle = li.Book.Title,
+                Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString() 
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : LoanItemStatus.Overdue.ToString()
             }).ToList()
         });
 
@@ -83,11 +134,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
 
     [Authorize]
-    [HttpGet ("own_loans")]
+    [HttpGet ("me/loans")]
     public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetOwnLoans([FromQuery] LoanItemFilter filter)
     {
         var query = _context.Loan.AsQueryable();
-        var today = DateOnly.FromDateTime(DateTime.Today);
         if (!string.IsNullOrWhiteSpace(filter.BookTitle))
         {
             query = query.Where(l => l.LoanItems.Any(b => b.Book != null && b.Book.Title.ToLower().Contains(filter.BookTitle.ToLower())));
@@ -121,9 +171,9 @@ public class LoanController(AppDbContext context) : BaseController (context)
             LoanItems = l.LoanItems.Select(li => new ReadLoanItemDTO
             {
                 Id = li.Id,
-                Status =  li.ReturnedAt != null ? "Returned" 
-                    : li.DueDate > today ? $"Current Loan. Return Deadline: {li.DueDate}" 
-                    : "Overdue",
+                Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString() 
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : LoanItemStatus.Overdue.ToString(),
                 DueDate = li.DueDate,
                 BookId = li.BookId,
                 BookTitle = li.Book.Title
@@ -136,7 +186,7 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
 
     [Authorize (Roles = "Admin")]  
-    [HttpGet("get-loan-by-id")]
+    [HttpGet("loans/{id}")]
     public async Task<ActionResult<ReadLoanDTO>> GetLoanById(int id)
     {
         var currLoan = await FindLoanById(id);
@@ -151,16 +201,20 @@ public class LoanController(AppDbContext context) : BaseController (context)
               DueDate = li.DueDate,
               ReturnedAt = li.ReturnedAt,
               BookId = li.BookId,
-              BookTitle = li.Book.Title
+              BookTitle = li.Book.Title,
+              Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString() 
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : LoanItemStatus.Overdue.ToString()
           })]
         };
         return loan;
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpPost ("add-loan")]
+    [HttpPost ("loans")]
     public async Task<IActionResult> AddLoan([FromBody] CreateLoanDTO dto)
     {
+        await FindUserById(dto.UserId);
         var loan = new Loan
         {
             UserId = dto.UserId,
@@ -175,6 +229,8 @@ public class LoanController(AppDbContext context) : BaseController (context)
             });
             await CheckBookAvailability(item.BookId);
             await AvailableCopiesCalc(item.BookId, Operands.Minus);
+            await CheckIfUserHasTheCopy(item.BookId, dto.UserId);
+            
         }
         _context.Loan.Add(loan);
         await _context.SaveChangesAsync();
@@ -190,13 +246,16 @@ public class LoanController(AppDbContext context) : BaseController (context)
               DueDate = li.DueDate,
               ReturnedAt = li.ReturnedAt,
               BookId = li.BookId,
-              BookTitle = li.Book.Title
+              BookTitle = li.Book.Title,
+              Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString() 
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : "Overdue"
           })]
         });
     }
 
     [Authorize]
-    [HttpPost ("borrow")]
+    [HttpPost ("me/loans")]
     public async Task<IActionResult> Borrow([FromBody] BorrowDTO dto)
     {
         int id = ExtractId();
@@ -214,6 +273,7 @@ public class LoanController(AppDbContext context) : BaseController (context)
             });
             await CheckBookAvailability(item.BookId);
             await AvailableCopiesCalc(item.BookId, Operands.Minus);
+            await CheckIfUserHasTheCopy(item.BookId, id);
         }
         _context.Loan.Add(loan);
         await _context.SaveChangesAsync();
@@ -229,7 +289,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
               DueDate = li.DueDate,
               ReturnedAt = li.ReturnedAt,
               BookId = li.BookId,
-              BookTitle = li.Book.Title
+              BookTitle = li.Book.Title,
+              Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString()
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : LoanItemStatus.Overdue.ToString()
           })]
         });
     }
@@ -237,9 +300,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
     
     [Authorize (Roles = "Admin")]
-    [HttpPut ("edit-loan")]
+    [HttpPut ("loans/{id}")]
     public async Task<IActionResult> EditLoan(int id, EditLoanDTO dto)
     {
+        await FindUserById(dto.UserId);
         var loan = await FindLoanById(id);
         foreach(var item in loan.LoanItems)
         {
@@ -255,7 +319,9 @@ public class LoanController(AppDbContext context) : BaseController (context)
         }
         foreach(var item in loan.LoanItems)
         {
+            await CheckBookAvailability(item.BookId);
             await AvailableCopiesCalc(item.BookId, Operands.Minus);
+            await CheckIfUserHasTheCopy(item.BookId, dto.UserId);
         }
         await _context.SaveChangesAsync();
         var updatedLoan = await FindLoanById(loan.Id);
@@ -270,13 +336,16 @@ public class LoanController(AppDbContext context) : BaseController (context)
               DueDate = li.DueDate,
               ReturnedAt = li.ReturnedAt,
               BookId = li.BookId,
-              BookTitle = li.Book.Title
+              BookTitle = li.Book.Title,
+              Status = li.ReturnedAt != null ? LoanItemStatus.Returned.ToString() 
+                    : li.DueDate >= today ? $"{LoanItemStatus.Current} Loan. Return Deadline: {li.DueDate}" 
+                    : LoanItemStatus.Overdue.ToString()
           })]
         });
     }
     
     [Authorize (Roles = "Admin")]
-    [HttpDelete ("delete-loan")]
+    [HttpDelete ("loans/{id}")]
     public async Task<IActionResult> DeleteLoan(int id)
     {
         var loan = await FindLoanById(id);

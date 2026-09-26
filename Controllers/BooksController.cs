@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Authorization;
+using LibraryManagement.Api.GlobalExceptionHandler;
 
 namespace LibraryManagement.Api.Controllers;
 
@@ -15,14 +16,6 @@ namespace LibraryManagement.Api.Controllers;
 
 public class BookController(AppDbContext context) : BaseController(context)
 {
-
-    private async Task<Book> FindBookById(int id)
-    {
-        var currBook = await _context.Book.FirstOrDefaultAsync(m => m.Id == id) ?? throw new KeyNotFoundException("Book Not Found");
-        return currBook;
-    }
-
-    // count how many times book was loaned out
     private async Task<int> CountLoanedCopies(Book book)
     {
         var loanedCopies = await _context.LoanItem.Where(i => i.BookId == book.Id).ToListAsync();
@@ -31,7 +24,7 @@ public class BookController(AppDbContext context) : BaseController(context)
 
     // add book not found functionality
     
-    [HttpGet("all_books")]
+    [HttpGet("books")]
     public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks([FromQuery] BookFilter filter)
     {
         var query = _context.Book.AsQueryable();
@@ -55,6 +48,7 @@ public class BookController(AppDbContext context) : BaseController(context)
         {
             Id = b.Id,
             Title = b.Title,
+            Author = b.AuthorBooks.Select(ab => ab.Author.Name).ToList(),
             PublicationYear = b.PublicationYear,
             Genre = b.Genre,
             TotalCopies = b.TotalCopies,
@@ -74,7 +68,7 @@ public class BookController(AppDbContext context) : BaseController(context)
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpGet("get_book_by_id")]
+    [HttpGet("books/{id}")]
     public async Task<ActionResult<ReadBooksDTO>> GetBookById(int id)
     {
         var currBook = await FindBookById(id);
@@ -82,6 +76,7 @@ public class BookController(AppDbContext context) : BaseController(context)
         {
             Id = currBook.Id,
             Title = currBook.Title,
+            Author = currBook.AuthorBooks.Select(ab => ab.Author.Name).ToList(),
             PublicationYear = currBook.PublicationYear,
             Genre = currBook.Genre,
             TotalCopies = currBook.TotalCopies,
@@ -92,8 +87,8 @@ public class BookController(AppDbContext context) : BaseController(context)
     }
     
     [Authorize (Roles = "Admin")]
-    [HttpPost ("add_book")]
-    public async Task<IActionResult> AddBook([FromForm] CreateBookDTO dto)
+    [HttpPost ("books")]
+    public async Task<ActionResult<ReadBooksDTO>> AddBook([FromForm] CreateBookDTO dto)
     {
         var book = new Book
         {
@@ -106,12 +101,22 @@ public class BookController(AppDbContext context) : BaseController(context)
         };
         _context.Book.Add(book);
         await _context.SaveChangesAsync();
-        return Ok(book);
+        var newBook = await FindBookById(book.Id);
+        return Ok(new ReadBooksDTO
+        {
+            Id = newBook.Id,
+            Title = newBook.Title,
+            Author = newBook.AuthorBooks.Select(ab => ab.Author.Name).ToList(),
+            PublicationYear = newBook.PublicationYear,
+            Genre = newBook.Genre,
+            TotalCopies = newBook.TotalCopies,
+            AvailableCopies = newBook.AvailableCopies
+        });
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpPut ("edit_book")]
-    public async Task<IActionResult> EditBook(int id, EditBookDTO dto)
+    [HttpPut ("books/{id}")]
+    public async Task<ActionResult<ReadBooksDTO>> EditBook(int id, EditBookDTO dto)
     {
         var currBook = await FindBookById(id);
         currBook.Title = dto.Title;
@@ -120,11 +125,20 @@ public class BookController(AppDbContext context) : BaseController(context)
         currBook.AvailableCopies = dto.TotalCopies - await CountLoanedCopies(currBook);
 
         await _context.SaveChangesAsync();
-        return Ok(currBook);
+        return Ok(new ReadBooksDTO
+        {
+            Id = currBook.Id,
+            Title = currBook.Title,
+            Author = currBook.AuthorBooks.Select(ab => ab.Author.Name).ToList(),
+            PublicationYear = currBook.PublicationYear,
+            Genre = currBook.Genre,
+            TotalCopies = currBook.TotalCopies,
+            AvailableCopies = currBook.AvailableCopies
+        });
     }
     
     [Authorize (Roles = "Admin")]
-    [HttpDelete ("delete_book")]
+    [HttpDelete ("books/{id}")]
     public async Task<IActionResult> DeleteBook(int id)
     {
         var currBook = await FindBookById(id);

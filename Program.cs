@@ -1,5 +1,6 @@
 using System.Text;
 using LibraryManagement.Api.Data;
+using LibraryManagement.Api.GlobalExceptionHandler;
 using LibraryManagement.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -52,6 +53,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddScoped<IAuthService, AuthService>();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -65,11 +69,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
+app.UseExceptionHandler();
 app.UseHttpsRedirection();
 
-// app.UseAuthentication();
+app.UseAuthentication();
 
 app.UseAuthorization();
+
 
 app.MapControllers();
 

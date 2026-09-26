@@ -7,6 +7,7 @@ using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using LibraryManagement.Api.GlobalExceptionHandler;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController] // user can view their own data
@@ -14,17 +15,8 @@ namespace LibraryManagement.Api.Controllers;
 
 public class UserController(AppDbContext context) : BaseController(context)
 {
-    public static User user = new();
-
-    private async Task<User> FindUserById(int id)
-    {
-        var user = await _context.User.FirstOrDefaultAsync(m => m.Id == id) ?? throw new KeyNotFoundException("User Not Found");
-        return user;
-    }
-
-
     [Authorize(Roles = "Admin")]
-    [HttpGet ("all_users")]
+    [HttpGet ("users")]
     public async Task<ActionResult<IEnumerable<ReadUserDTO>>> GetAllUsers([FromQuery] StringFilter filter)
     {
         var query = _context.User.AsQueryable();
@@ -55,7 +47,7 @@ public class UserController(AppDbContext context) : BaseController(context)
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpGet("get_user_by_id")]
+    [HttpGet("users/{id}")]
     public async Task<ActionResult<ReadUserDTO>> GetUserById(int id)
     {
         var currUser = await FindUserById(id);
@@ -68,7 +60,7 @@ public class UserController(AppDbContext context) : BaseController(context)
     }
 
     [Authorize]
-    [HttpGet("get_self")]
+    [HttpGet("me/users")]
     public async Task<ActionResult<ReadUserDTO>> GetSelf()
     {
         int userId = ExtractId();
@@ -82,7 +74,7 @@ public class UserController(AppDbContext context) : BaseController(context)
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpPut ("edit_user")]
+    [HttpPut ("users/{id}")]
     public async Task<IActionResult> EditUser(int id, CreateEditUserDTO dto)
     {
         var currUser = await FindUserById(id);
@@ -93,7 +85,7 @@ public class UserController(AppDbContext context) : BaseController(context)
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpDelete ("delete_user")]
+    [HttpDelete ("users/{id}")]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var currUser = await FindUserById(id);

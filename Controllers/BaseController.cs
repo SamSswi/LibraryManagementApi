@@ -1,4 +1,5 @@
 using LibraryManagement.Api.Data;
+using LibraryManagement.Api.GlobalExceptionHandler;
 using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -33,19 +34,19 @@ public abstract class BaseController(AppDbContext context) : ControllerBase
 
     protected async Task AvailableCopiesCalc (int bookId, Operands operand)
     {
-        var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new KeyNotFoundException("Book not found");
+        var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new NotFoundException("Book not found");
         if(operand == Operands.Plus && book.AvailableCopies < book.TotalCopies) book.AvailableCopies ++;
-        else if(operand == Operands.Plus && book.AvailableCopies >= book.TotalCopies) throw new InvalidOperationException("Available copies cannot exceed total copies");
+        else if(operand == Operands.Plus && book.AvailableCopies >= book.TotalCopies) throw new ConflictException("Available copies cannot exceed total copies");
         else if(operand == Operands.Minus && book.AvailableCopies > 0) book.AvailableCopies --;
-        else if(operand == Operands.Minus && book.AvailableCopies <= 0) throw new InvalidOperationException("Available copies cannot be fewer than zero");
-        else throw new InvalidOperationException("Attempted invalid operation with available copies");
+        else if(operand == Operands.Minus && book.AvailableCopies <= 0) throw new ConflictException("Available copies cannot be fewer than zero");
+        else throw new ConflictException("Attempted invalid operation with available copies");
     }
 
     protected int ExtractId()
     {
         var uId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if(!int.TryParse(uId, out var userId))
-            throw new UnauthorizedAccessException("Token contains an invalid user Id");
+            throw new UnauthException("Token contains an invalid user Id");
         return userId;
     }
 
@@ -56,7 +57,26 @@ public abstract class BaseController(AppDbContext context) : ControllerBase
             .Include(l => l.LoanItems)
                 .ThenInclude(li => li.Book)
             .FirstOrDefaultAsync(m => m.Id == id) 
-            ?? throw new KeyNotFoundException("Loan Not Found");
+            ?? throw new NotFoundException("Loan Not Found");
         return loan;
     }
+
+    protected async Task<Book> FindBookById(int id)
+    {
+        var currBook = await _context.Book.Include(b => b.AuthorBooks).ThenInclude(a => a.Author).FirstOrDefaultAsync(m => m.Id == id) ?? throw new NotFoundException("Book Not Found");
+        return currBook;
+    }
+
+    protected async Task<Author> FindAuthorById(int id)
+    {
+        var currAuth = await _context.Author.Include(a => a.AuthorBooks).ThenInclude(ab => ab.Book).FirstOrDefaultAsync(m => m.Id == id) ?? throw new NotFoundException("Author Not Found");
+        return currAuth;
+    }
+
+    protected async Task<User> FindUserById(int id)
+    {
+        var user = await _context.User.FirstOrDefaultAsync(m => m.Id == id) ?? throw new NotFoundException("User Not Found");
+        return user;
+    }
+
 }

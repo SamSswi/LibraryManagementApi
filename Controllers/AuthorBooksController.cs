@@ -1,9 +1,12 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
+using LibraryManagement.Api.GlobalExceptionHandler;
 using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Diagnostics;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
@@ -16,7 +19,8 @@ namespace LibraryManagement.Api.Controllers;
 
 public class AuthorBookController(AppDbContext context) : BaseController(context)
 {
-    [HttpGet ("all-books-and-authors")]
+    [Authorize(Roles = "Admin")]
+    [HttpGet ("author-books")]
     public async Task<ActionResult<IEnumerable<AuthorBookReadDTO>>> AllAuthorBooks(int page = 1, int pageSize = 10)
     {
         var query = _context.AuthorBooks.Select(ab => new AuthorBookReadDTO
@@ -41,47 +45,64 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
     }
     
     [Authorize (Roles = "Admin")]
-    [HttpGet ("author-{authorId}/books")]
+    [HttpGet ("authors/{authorId}/books")]
     // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadBooksDTO>>> FindBooksByAnAuthor(int authorId)
     {
-        var authorExists = await _context.Author.AnyAsync(a => a.Id == authorId);
-        if(!authorExists) return NotFound("Author not found");
+        await FindAuthorById(authorId);
         var books = await _context.AuthorBooks
             .Where(ab => ab.AuthorId == authorId)
             .Select(ab => new ReadBooksDTO
             {
                 Id = ab.Book.Id,
-                Title = ab.Book.Title
-            })
+                Title = ab.Book.Title,
+                Author = new List<string> {ab.Author.Name},
+                PublicationYear = ab.Book.PublicationYear,
+                Genre = ab.Book.Genre,
+                TotalCopies = ab.Book.TotalCopies,
+                AvailableCopies = ab.Book.AvailableCopies                
+            }) 
             .ToListAsync();
-        if(books.Count == 0) return NotFound("No books by this author");
         return Ok(books);
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpGet ("book-{bookId}/authors")]
+    [HttpGet ("books/{bookId}/authors")]
     // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadAuthorDTO>>> FindAuthorsOfABook(int bookId)
     {
-        var bookExists = await _context.Book.AnyAsync(b => b.Id == bookId);
-        if(!bookExists) return NotFound("Book not found");
+        await FindBookById(bookId);
         var books = await _context.AuthorBooks
             .Where(ab => ab.BookId == bookId)
             .Select(ab => new ReadAuthorDTO
             {
                 Id = ab.Author.Id,
-                Name = ab.Author.Name
+                Name = ab.Author.Name,
+                Books = new List<string> {ab.Book.Title}
             })
             .ToListAsync();
-        if(books.Count == 0) return NotFound("No authors for this book");
         return Ok(books);
     }
 
+    private async Task CheckRelationship(int authorId, int bookId)
+    {
+        var checkRel = await _context.AuthorBooks.FirstOrDefaultAsync(ab => ab.AuthorId == authorId && ab.BookId == bookId);
+        if(checkRel != null) throw new ConflictException("The Author Book relationship exists or the book is duplicated in the memory");
+    }
+
     [Authorize (Roles = "Admin")]
-    [HttpPost ("add_authorbooks")]
+    [HttpPost ("author-books")]
     public async Task<IActionResult> AddAuthorBook([FromForm] CreateAuthorBooksDTO dto)
     {
+        await FindAuthorById(dto.AuthorId);
+        var book = await FindBookById(dto.BookId);
+        await CheckRelationship(dto.AuthorId, dto.BookId);
+        // workaround for not having ISBN code, since multiple books can have identical titles
+        var booksSameTitle = await _context.Book.Where(b => b.Title.ToLower() == book.Title.ToLower()).ToListAsync();
+        foreach(var bk in booksSameTitle)
+        {
+            await CheckRelationship(dto.AuthorId, bk.Id);
+        }
         var ab = new AuthorBook
         {
             AuthorId = dto.AuthorId,
@@ -97,15 +118,13 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
     }
 
     [Authorize (Roles = "Admin")]
-    [HttpDelete ("authorbooks/{authorId}/{bookId}")]
+    [HttpDelete ("author/{authorId}/book/{bookId}")]
     public async Task<IActionResult> DeleteAuthorBookRel(int authorId, int bookId)
     {
-        var authorExists = await _context.Author.AnyAsync(a => a.Id == authorId);
-        if(!authorExists) return NotFound("Author not found");
-        var bookExists = await _context.Book.AnyAsync(b => b.Id == bookId);
-        if(!bookExists) return NotFound("Book not found");
-        var currAuthBook = await _context.AuthorBooks.FirstOrDefaultAsync(ab => ab.AuthorId == authorId && ab.BookId == bookId);
-        if(currAuthBook == null) return NotFound("Author-book relation not found");
+        await FindAuthorById(authorId);
+        await FindBookById(bookId);
+        var currAuthBook = await _context.AuthorBooks.FirstOrDefaultAsync(ab => ab.AuthorId == authorId && ab.BookId == bookId) 
+            ?? throw new NotFoundException("Author - Book Relation not found");
         _context.AuthorBooks.Remove(currAuthBook);
         await _context.SaveChangesAsync();
         return Ok();
