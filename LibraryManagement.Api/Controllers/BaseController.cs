@@ -10,6 +10,14 @@ namespace LibraryManagement.Api.Controllers;
 public abstract class BaseController(AppDbContext context) : ControllerBase
 {
     protected readonly AppDbContext _context = context;
+
+    /// <summary>
+    /// Normalizes invalid Page and PageSize values
+    /// Calculates total number of pages based on the record count
+    /// </summary>
+    /// <returns>
+    /// A dictionary containing the normalized page and pageSize
+    /// </returns>
     protected Dictionary<string, int>  NormalizePageData(int page, int pageSize, int totalInstances)
     {
         if(pageSize < 1) pageSize = 1;
@@ -32,13 +40,22 @@ public abstract class BaseController(AppDbContext context) : ControllerBase
         Minus
     }
 
+    /// <summary>
+    /// Increments or decrements a book's available copies while
+    /// enforcing the permitted range of zero to total copies.
+    /// </summary>
+    /// <exception cref="ConflictException">
+    /// Thrown when the operation would exceed the permitted range.
+    /// </exception>
     protected async Task AvailableCopiesCalc (int bookId, Operands operand)
     {
         var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == bookId) ?? throw new NotFoundException("Book not found");
         if(operand == Operands.Plus && book.AvailableCopies < book.TotalCopies) book.AvailableCopies ++;
-        else if(operand == Operands.Plus && book.AvailableCopies >= book.TotalCopies) throw new ConflictException("Available copies cannot exceed total copies");
+        else if(operand == Operands.Plus && book.AvailableCopies >= book.TotalCopies) 
+            throw new ConflictException("Available copies cannot exceed total copies");
         else if(operand == Operands.Minus && book.AvailableCopies > 0) book.AvailableCopies --;
-        else if(operand == Operands.Minus && book.AvailableCopies <= 0) throw new ConflictException("Available copies cannot be fewer than zero");
+        else if(operand == Operands.Minus && book.AvailableCopies <= 0) 
+            throw new ConflictException("Available copies cannot be fewer than zero");
         else throw new ConflictException("Attempted invalid operation with available copies");
     }
 
@@ -63,13 +80,15 @@ public abstract class BaseController(AppDbContext context) : ControllerBase
 
     protected async Task<Book> FindBookById(int id)
     {
-        var currBook = await _context.Book.Include(b => b.AuthorBooks).ThenInclude(a => a.Author).FirstOrDefaultAsync(m => m.Id == id) ?? throw new NotFoundException("Book Not Found");
+        var currBook = await _context.Book.Include(b => b.AuthorBooks).ThenInclude(a => a.Author).FirstOrDefaultAsync(m => m.Id == id) 
+            ?? throw new NotFoundException("Book Not Found");
         return currBook;
     }
 
     protected async Task<Author> FindAuthorById(int id)
     {
-        var currAuth = await _context.Author.Include(a => a.AuthorBooks).ThenInclude(ab => ab.Book).FirstOrDefaultAsync(m => m.Id == id) ?? throw new NotFoundException("Author Not Found");
+        var currAuth = await _context.Author.Include(a => a.AuthorBooks).ThenInclude(ab => ab.Book).FirstOrDefaultAsync(m => m.Id == id) 
+            ?? throw new NotFoundException("Author Not Found");
         return currAuth;
     }
 

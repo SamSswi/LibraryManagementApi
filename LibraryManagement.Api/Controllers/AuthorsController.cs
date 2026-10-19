@@ -3,14 +3,13 @@ using LibraryManagement.Api.Models;
 using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Authorization;
 using LibraryManagement.Api.GlobalExceptionHandler;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController] // all authorized besides view
+[ApiController]
 [Route("api/[controller]")]
 
 public class AuthorController(AppDbContext context) : BaseController(context)
@@ -67,7 +66,7 @@ public class AuthorController(AppDbContext context) : BaseController(context)
         {
             Name = dto.Name
         };
-        var duplicateAuth = await _context.Author.AnyAsync(a => a.Name.Equals(author.Name, StringComparison.CurrentCultureIgnoreCase));
+        var duplicateAuth = await _context.Author.AnyAsync(a => a.Name.ToLower() == author.Name.ToLower());
         if(duplicateAuth) throw new ConflictException("The Author name has been already added");
         _context.Author.Add(author);
         await _context.SaveChangesAsync();
@@ -105,19 +104,4 @@ public class AuthorController(AppDbContext context) : BaseController(context)
         await _context.SaveChangesAsync();
         return Ok();
     }
-
-    // [HttpPost ("seed-author")]
-    // public async Task<IActionResult> SeedAuthor()
-    // {
-    //     for(int i = 0; i < 100; i++)
-    //     {
-    //         _context.Author.Add(new Author
-    //         {
-    //             Name = $"Name{i}"
-    //         });
-    //     }
-    //     await _context.SaveChangesAsync();
-    //     return Ok();
-    // }
-    
 }

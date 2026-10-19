@@ -4,19 +4,13 @@ using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Filter;
-using Microsoft.AspNetCore.Http.Features;
-using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using System.Runtime.CompilerServices;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.VisualBasic;
 using LibraryManagement.Api.GlobalExceptionHandler;
 using System.Text.Json.Serialization;
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController] // user can view their own loans
+[ApiController]
 [Route("api/[controller]")]
 
 public class LoanController(AppDbContext context) : BaseController (context)
@@ -357,39 +351,4 @@ public class LoanController(AppDbContext context) : BaseController (context)
         await _context.SaveChangesAsync();
         return Ok();
     }
-
-    // [HttpPost ("seed-loans")]
-    // public async Task<IActionResult> SeedLoans()
-    // {
-    //     int userId = 2;
-    //     int bookId = 12;
-    //     for(int i = 0; i < 100; i++)
-    //     {
-    //         _context.Loan.Add(new Loan
-    //         {
-    //             UserId = userId,
-    //             LoanItems = [new LoanItem {
-    //                 BookId = bookId
-    //             }]
-
-    //         });
-    //         userId ++;
-    //         bookId ++;
-    //     }
-    //     await _context.SaveChangesAsync();
-    //     return Ok();
-    // }
-    // [HttpDelete ("delete-loans-many")]
-    // public IActionResult DeleteLoans()
-    // {
-
-    //     for(int i = 1; i < 101; i++)
-    //     {
-    //         _context.Remove(FindLoanById(i));
-    //     }
-    //     _context.SaveChanges();
-    //     return Ok();
-    // }
-    
-
 }

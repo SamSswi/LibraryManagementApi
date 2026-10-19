@@ -2,12 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
-using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Filter;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
-using LibraryManagement.Api.GlobalExceptionHandler;
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController] // user can view their own data
@@ -93,18 +89,4 @@ public class UserController(AppDbContext context) : BaseController(context)
         await _context.SaveChangesAsync();
         return Ok();
     }
-    // [HttpPost ("seed-user")]
-    // public async Task<IActionResult> SeedUser()
-    // {
-    //     for(int i = 0; i < 100; i++)
-    //     {
-    //         _context.User.Add(new User
-    //         {
-    //             Name = $"Name{i}"
-    //         });
-    //     }
-    //     await _context.SaveChangesAsync();
-    //     return Ok();
-    // }
-
 }

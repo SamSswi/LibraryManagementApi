@@ -2,16 +2,14 @@ using System.Collections.Immutable;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.Models;
 using LibraryManagement.Api.DTO;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LibraryManagement.Api.Filter;
 using Microsoft.AspNetCore.Authorization;
-using LibraryManagement.Api.GlobalExceptionHandler;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController] // only view for user
+[ApiController]
 [Route("api/[controller]")]
 
 public class BookController(AppDbContext context) : BaseController(context)
@@ -21,8 +19,6 @@ public class BookController(AppDbContext context) : BaseController(context)
         var loanedCopies = await _context.LoanItem.Where(i => i.BookId == book.Id).ToListAsync();
         return loanedCopies.Count;
     }
-
-    // add book not found functionality
     
     [HttpGet("books")]
     public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks([FromQuery] BookFilter filter)
@@ -122,6 +118,8 @@ public class BookController(AppDbContext context) : BaseController(context)
         currBook.Title = dto.Title;
         currBook.PublicationYear = dto.PublicationYear;
         currBook.TotalCopies = dto.TotalCopies;
+        // Recalculate available copies when the total changes,
+        // accounting for copies currently on loan.
         currBook.AvailableCopies = dto.TotalCopies - await CountLoanedCopies(currBook);
 
         await _context.SaveChangesAsync();
@@ -146,21 +144,4 @@ public class BookController(AppDbContext context) : BaseController(context)
         await _context.SaveChangesAsync();
         return Ok();
     }
-
-    // [HttpPost ("seed-books")]
-    // public async Task<IActionResult> SeedBooks()
-    // {
-    //     for(int i = 0; i < 100; i++)
-    //     {
-    //         _context.Book.Add(new Book
-    //         {
-    //             Title = $"Book{i}",
-    //             PublicationYear = 1460 + i,
-    //             TotalCopies = 3,
-    //             AvailableCopies = 0
-    //         });
-    //     }
-    //     await _context.SaveChangesAsync();
-    //     return Ok();
-    // }
 }

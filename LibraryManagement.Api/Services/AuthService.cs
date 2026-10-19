@@ -5,7 +5,6 @@ using System.Text;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.Models;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;

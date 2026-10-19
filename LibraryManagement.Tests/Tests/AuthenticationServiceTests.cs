@@ -71,7 +71,7 @@ public class AuthenticationServiceTests
     {
         var dto = new CreateEditUserDTO{
             Name = "User Name",
-            Password = "password"            
+            Password = "password"
         };
 
         var configuration = TestDataFactory.ConfigurationTest();

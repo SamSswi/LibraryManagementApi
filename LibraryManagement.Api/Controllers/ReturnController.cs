@@ -1,15 +1,12 @@
 using LibraryManagement.Api.Data;
-using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.GlobalExceptionHandler;
-using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
-[ApiController] // admin only
+[ApiController]
 [Route("api/[controller]")]
 
 public class ReturnController(AppDbContext context) : BaseController(context)

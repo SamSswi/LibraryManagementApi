@@ -1,6 +1,5 @@
 namespace LibraryManagement.Api.GlobalExceptionHandler;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 public class GlobalExceptionHandler : IExceptionHandler
 {

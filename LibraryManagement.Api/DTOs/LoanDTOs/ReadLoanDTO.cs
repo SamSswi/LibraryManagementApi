@@ -1,5 +1,3 @@
-using LibraryManagement.Api.Models;
-
 namespace LibraryManagement.Api.DTO;
 
 public class ReadLoanDTO

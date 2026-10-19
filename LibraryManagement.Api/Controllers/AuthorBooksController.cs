@@ -1,21 +1,15 @@
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using LibraryManagement.Api.Data;
 using LibraryManagement.Api.DTO;
 using LibraryManagement.Api.GlobalExceptionHandler;
 using LibraryManagement.Api.Models;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Diagnostics;
-using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 
 namespace LibraryManagement.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")] //only view for user
+[Route("api/[controller]")]
 
 public class AuthorBookController(AppDbContext context) : BaseController(context)
 {
@@ -36,7 +30,7 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
         Dictionary<string, int> normData = NormalizePageData(page, pageSize, totalAuthorBooks);
 
         var abPerPage = await query
-            .OrderBy(ab => ab.AuthorId)
+            .OrderBy(ab => ab.AuthorId).ThenBy(ab => ab.BookId)
             .Skip((normData["page"] - 1) * normData["pageSize"])
             .Take(normData["pageSize"])
             .ToListAsync();
@@ -46,7 +40,6 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
     
     [Authorize (Roles = "Admin")]
     [HttpGet ("authors/{authorId}/books")]
-    // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadBooksDTO>>> FindBooksByAnAuthor(int authorId)
     {
         await FindAuthorById(authorId);
@@ -68,7 +61,6 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
 
     [Authorize (Roles = "Admin")]
     [HttpGet ("books/{bookId}/authors")]
-    // for some reason there is a second irrelevant id in swagger i think it's from calling on readbooksdto
     public async Task<ActionResult<List<ReadAuthorDTO>>> FindAuthorsOfABook(int bookId)
     {
         await FindBookById(bookId);
@@ -97,7 +89,9 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
         await FindAuthorById(dto.AuthorId);
         var book = await FindBookById(dto.BookId);
         await CheckRelationship(dto.AuthorId, dto.BookId);
-        // workaround for not having ISBN code, since multiple books can have identical titles
+        
+        // Prevent an author from being associated with multiple
+        // book records that share the same title.
         var booksSameTitle = await _context.Book.Where(b => b.Title.ToLower() == book.Title.ToLower()).ToListAsync();
         foreach(var bk in booksSameTitle)
         {
@@ -128,25 +122,5 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
         _context.AuthorBooks.Remove(currAuthBook);
         await _context.SaveChangesAsync();
         return Ok();
-    }
-
-    // [HttpPost ("seed-authorBook")]
-    // public async Task<IActionResult> SeedAuthorBooks()
-    // {
-    //     int bookId = 12;
-    //     int authorId = 13;
-    //     for(int i = 0; i < 100; i++)
-    //     {
-    //         _context.AuthorBooks.Add(new AuthorBook
-    //         {
-    //             AuthorId = authorId,
-    //             BookId = bookId
-    //         });
-    //         authorId++;
-    //         bookId++;
-    //     }
-    //     await _context.SaveChangesAsync();
-    //     return Ok();
-    // }
-    
+    }    
 }

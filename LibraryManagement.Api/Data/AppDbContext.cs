@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using LibraryManagement.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +35,4 @@ public class AppDbContext : DbContext
             .WithMany(sc => sc.AuthorBooks)
             .HasForeignKey(sc => sc.BookId);
     }
-    
-
 }
