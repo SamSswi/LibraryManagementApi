@@ -14,6 +14,11 @@ public class ReturnController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpPut ("loanItems/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<ActionResult> ReturnItem(int id)
     {
         var loanItem = await _context.LoanItem.FirstOrDefaultAsync(li => li.Id == id)
@@ -24,11 +29,15 @@ public class ReturnController(AppDbContext context) : BaseController(context)
         var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == loanItem.BookId) ?? throw new NotFoundException("Book not Found");
         await AvailableCopiesCalc(book.Id, Operands.Plus);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }
 
     [Authorize]
     [HttpPut ("me/loanItems/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<ActionResult> ReturnBook(int id)
     {
         int userId = ExtractId();
@@ -41,7 +50,7 @@ public class ReturnController(AppDbContext context) : BaseController(context)
         var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == loanItem.BookId) ?? throw new NotFoundException("Book not Found");
         await AvailableCopiesCalc(book.Id, Operands.Plus);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }
 
 }

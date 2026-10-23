@@ -21,6 +21,7 @@ public class BookController(AppDbContext context) : BaseController(context)
     }
     
     [HttpGet("books")]
+    [ProducesResponseType(typeof(IEnumerable<ReadBooksDTO>), 200)]
     public async Task<ActionResult<IEnumerable<ReadBooksDTO>>> GetBooks([FromQuery] BookFilter filter)
     {
         var query = _context.Book.AsQueryable();
@@ -65,6 +66,11 @@ public class BookController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpGet("books/{id}")]
+    [ProducesResponseType(typeof(ReadBooksDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+
     public async Task<ActionResult<ReadBooksDTO>> GetBookById(int id)
     {
         var currBook = await FindBookById(id);
@@ -78,12 +84,16 @@ public class BookController(AppDbContext context) : BaseController(context)
             TotalCopies = currBook.TotalCopies,
             AvailableCopies = currBook.AvailableCopies
         };
-        return book;
+        return Ok(book);
 
     }
     
     [Authorize (Roles = "Admin")]
     [HttpPost ("books")]
+    [ProducesResponseType(typeof(ReadBooksDTO), 201)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ReadBooksDTO>> AddBook([FromForm] CreateBookDTO dto)
     {
         var book = new Book
@@ -98,7 +108,7 @@ public class BookController(AppDbContext context) : BaseController(context)
         _context.Book.Add(book);
         await _context.SaveChangesAsync();
         var newBook = await FindBookById(book.Id);
-        return Ok(new ReadBooksDTO
+        return StatusCode(201, new ReadBooksDTO
         {
             Id = newBook.Id,
             Title = newBook.Title,
@@ -112,6 +122,10 @@ public class BookController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpPut ("books/{id}")]
+    [ProducesResponseType(typeof(ReadBooksDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ReadBooksDTO>> EditBook(int id, EditBookDTO dto)
     {
         var currBook = await FindBookById(id);
@@ -137,11 +151,15 @@ public class BookController(AppDbContext context) : BaseController(context)
     
     [Authorize (Roles = "Admin")]
     [HttpDelete ("books/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteBook(int id)
     {
         var currBook = await FindBookById(id);
         _context.Remove(currBook);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }
 }

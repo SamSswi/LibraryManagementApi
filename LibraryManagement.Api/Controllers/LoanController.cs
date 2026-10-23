@@ -53,6 +53,9 @@ public class LoanController(AppDbContext context) : BaseController (context)
     
     [Authorize (Roles = "Admin")]
     [HttpGet ("loans")]
+    [ProducesResponseType(typeof(IEnumerable<ReadLoanDTO>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetAllLoans([FromQuery] LoanFilter filter)
     {
         var query = _context.Loan.AsQueryable();
@@ -129,6 +132,8 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
     [Authorize]
     [HttpGet ("me/loans")]
+    [ProducesResponseType(typeof(IEnumerable<ReadLoanDTO>), 200)]
+    [ProducesResponseType(401)]
     public async Task<ActionResult<IEnumerable<ReadLoanDTO>>> GetOwnLoans([FromQuery] LoanItemFilter filter)
     {
         var query = _context.Loan.AsQueryable();
@@ -181,6 +186,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
     [Authorize (Roles = "Admin")]  
     [HttpGet("loans/{id}")]
+    [ProducesResponseType(typeof(ReadLoanDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ReadLoanDTO>> GetLoanById(int id)
     {
         var currLoan = await FindLoanById(id);
@@ -201,11 +210,16 @@ public class LoanController(AppDbContext context) : BaseController (context)
                     : LoanItemStatus.Overdue.ToString()
           })]
         };
-        return loan;
+        return Ok(loan);
     }
 
     [Authorize (Roles = "Admin")]
     [HttpPost ("loans")]
+    [ProducesResponseType(typeof(ReadLoanResponseDTO), 201)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> AddLoan([FromBody] CreateLoanDTO dto)
     {
         await FindUserById(dto.UserId);
@@ -229,7 +243,7 @@ public class LoanController(AppDbContext context) : BaseController (context)
         _context.Loan.Add(loan);
         await _context.SaveChangesAsync();
         var createdLoan = await FindLoanById(loan.Id);
-        return Ok(new ReadLoanResponseDTO
+        return StatusCode(201, new ReadLoanResponseDTO
         {
             Id = createdLoan.Id,
             UserId = createdLoan.UserId,
@@ -250,6 +264,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
 
     [Authorize]
     [HttpPost ("me/loans")]
+    [ProducesResponseType(typeof(BorrowDTO), 201)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> Borrow([FromBody] BorrowDTO dto)
     {
         int id = ExtractId();
@@ -272,7 +290,7 @@ public class LoanController(AppDbContext context) : BaseController (context)
         _context.Loan.Add(loan);
         await _context.SaveChangesAsync();
         var createdLoan = await FindLoanById(loan.Id);
-        return Ok(new ReadLoanResponseDTO
+        return StatusCode(201, new ReadLoanResponseDTO
         {
             Id = createdLoan.Id,
             UserId = createdLoan.UserId,
@@ -295,6 +313,11 @@ public class LoanController(AppDbContext context) : BaseController (context)
     
     [Authorize (Roles = "Admin")]
     [HttpPut ("loans/{id}")]
+    [ProducesResponseType(typeof(ReadLoanResponseDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> EditLoan(int id, EditLoanDTO dto)
     {
         await FindUserById(dto.UserId);
@@ -340,6 +363,10 @@ public class LoanController(AppDbContext context) : BaseController (context)
     
     [Authorize (Roles = "Admin")]
     [HttpDelete ("loans/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteLoan(int id)
     {
         var loan = await FindLoanById(id);
@@ -349,6 +376,6 @@ public class LoanController(AppDbContext context) : BaseController (context)
         }
         _context.Remove(loan);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }
 }

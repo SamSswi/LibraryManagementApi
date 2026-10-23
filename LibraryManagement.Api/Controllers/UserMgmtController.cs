@@ -13,6 +13,9 @@ public class UserController(AppDbContext context) : BaseController(context)
 {
     [Authorize(Roles = "Admin")]
     [HttpGet ("users")]
+    [ProducesResponseType(typeof(IEnumerable<ReadUserDTO>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<ActionResult<IEnumerable<ReadUserDTO>>> GetAllUsers([FromQuery] StringFilter filter)
     {
         var query = _context.User.AsQueryable();
@@ -44,6 +47,10 @@ public class UserController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpGet("users/{id}")]
+    [ProducesResponseType(typeof(ReadUserDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ReadUserDTO>> GetUserById(int id)
     {
         var currUser = await FindUserById(id);
@@ -52,11 +59,14 @@ public class UserController(AppDbContext context) : BaseController(context)
             Id = currUser.Id,
             Name = currUser.Name
         };
-        return user;
+        return Ok(user);
     }
 
     [Authorize]
     [HttpGet("me/users")]
+    [ProducesResponseType(typeof(ReadUserDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<ReadUserDTO>> GetSelf()
     {
         int userId = ExtractId();
@@ -66,11 +76,15 @@ public class UserController(AppDbContext context) : BaseController(context)
             Id = currUser.Id,
             Name = currUser.Name
         };
-        return user;
+        return Ok(user);
     }
 
     [Authorize (Roles = "Admin")]
     [HttpPut ("users/{id}")]
+    [ProducesResponseType(typeof(CreateEditUserDTO), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> EditUser(int id, CreateEditUserDTO dto)
     {
         var currUser = await FindUserById(id);
@@ -82,11 +96,15 @@ public class UserController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpDelete ("users/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<IActionResult> DeleteUser(int id)
     {
         var currUser = await FindUserById(id);
         _context.Remove(currUser);
         await _context.SaveChangesAsync();
-        return Ok();
+        return NoContent();
     }
 }

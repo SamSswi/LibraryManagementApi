@@ -15,6 +15,7 @@ namespace LibraryManagement.Api.Controllers;
 public class AuthorController(AppDbContext context) : BaseController(context)
 {
     [HttpGet ("authors")]
+    [ProducesResponseType(typeof(IEnumerable<ReadAuthorDTO>), 200)]
     public async Task<ActionResult<IEnumerable<ReadAuthorDTO>>> GetAllAuthors([FromQuery] StringFilter filter)
     {
         var query = _context.Author.AsQueryable();
@@ -46,6 +47,11 @@ public class AuthorController(AppDbContext context) : BaseController(context)
     
     [Authorize (Roles = "Admin")]
     [HttpGet("authors/{id}")]
+    [ProducesResponseType(typeof(ReadAuthorDTO), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    
     public async Task<ActionResult<ReadAuthorDTO>> GetAuthorById(int id)
     {
         var currAuthor = await FindAuthorById(id);
@@ -55,11 +61,16 @@ public class AuthorController(AppDbContext context) : BaseController(context)
             Name = currAuthor.Name,
             Books = currAuthor.AuthorBooks.Select(ab => ab.Book.Title).ToList()
         };
-        return author;
+        return Ok(author);
     }
 
     [Authorize (Roles = "Admin")]
     [HttpPost ("authors")]
+    [ProducesResponseType(typeof(ReadAuthorDTO), 201)]
+    [ProducesResponseType(409)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<ActionResult<ReadAuthorDTO>> AddAuthor([FromForm] CreateEditAuthorDTO dto)
     {
         var author = new Author
@@ -71,7 +82,7 @@ public class AuthorController(AppDbContext context) : BaseController(context)
         _context.Author.Add(author);
         await _context.SaveChangesAsync();
         var newAuthor = await FindAuthorById(author.Id);
-        return Ok(new ReadAuthorDTO
+        return StatusCode(201, new ReadAuthorDTO
         {
             Id = newAuthor.Id,
             Name = newAuthor.Name,
@@ -81,6 +92,10 @@ public class AuthorController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpPut ("authors/{id}")]
+    [ProducesResponseType(typeof(ReadAuthorDTO), 200)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<ActionResult<ReadAuthorDTO>> EditAuthor(int id, CreateEditAuthorDTO dto)
     {
         var currAuth = await FindAuthorById(id);
@@ -97,11 +112,15 @@ public class AuthorController(AppDbContext context) : BaseController(context)
 
     [Authorize (Roles = "Admin")]
     [HttpDelete ("authors/{id}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(404)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<IActionResult> DeleteAuthor(int id)
     {
         var currAuth = await FindAuthorById(id);
         _context.Remove(currAuth);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }
 }

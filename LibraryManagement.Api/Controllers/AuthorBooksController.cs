@@ -15,6 +15,9 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
 {
     [Authorize(Roles = "Admin")]
     [HttpGet ("author-books")]
+    [ProducesResponseType(typeof(List<AuthorBookReadDTO>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
     public async Task<ActionResult<IEnumerable<AuthorBookReadDTO>>> AllAuthorBooks(int page = 1, int pageSize = 10)
     {
         var query = _context.AuthorBooks.Select(ab => new AuthorBookReadDTO
@@ -40,6 +43,10 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
     
     [Authorize (Roles = "Admin")]
     [HttpGet ("authors/{authorId}/books")]
+    [ProducesResponseType(typeof(List<ReadBooksDTO>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<List<ReadBooksDTO>>> FindBooksByAnAuthor(int authorId)
     {
         await FindAuthorById(authorId);
@@ -61,6 +68,10 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
 
     [Authorize (Roles = "Admin")]
     [HttpGet ("books/{bookId}/authors")]
+    [ProducesResponseType(typeof(List<ReadAuthorDTO>), 200)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
     public async Task<ActionResult<List<ReadAuthorDTO>>> FindAuthorsOfABook(int bookId)
     {
         await FindBookById(bookId);
@@ -84,6 +95,10 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
 
     [Authorize (Roles = "Admin")]
     [HttpPost ("author-books")]
+    [ProducesResponseType(typeof(AuthorBookReadResponseDTO), 201)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(409)]
     public async Task<IActionResult> AddAuthorBook([FromForm] CreateAuthorBooksDTO dto)
     {
         await FindAuthorById(dto.AuthorId);
@@ -104,7 +119,7 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
         };
         _context.Add(ab);
         await _context.SaveChangesAsync();
-        return Ok(new AuthorBookReadResponseDTO
+        return StatusCode(201, new AuthorBookReadResponseDTO
         {
             AuthorId = ab.AuthorId,
             BookId = ab.BookId
@@ -113,6 +128,11 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
 
     [Authorize (Roles = "Admin")]
     [HttpDelete ("author/{authorId}/book/{bookId}")]
+    [ProducesResponseType(204)]
+    [ProducesResponseType(401)]
+    [ProducesResponseType(403)]
+    [ProducesResponseType(404)]
+
     public async Task<IActionResult> DeleteAuthorBookRel(int authorId, int bookId)
     {
         await FindAuthorById(authorId);
@@ -121,6 +141,6 @@ public class AuthorBookController(AppDbContext context) : BaseController(context
             ?? throw new NotFoundException("Author - Book Relation not found");
         _context.AuthorBooks.Remove(currAuthBook);
         await _context.SaveChangesAsync();
-        return Ok();
+        return StatusCode(204);
     }    
 }
