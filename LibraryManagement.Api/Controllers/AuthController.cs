@@ -13,20 +13,25 @@ public class AuthController(IAuthService authService) : ControllerBase
 {
 
     [HttpPost ("register_user")]
-    [ProducesResponseType(typeof(CreateEditUserDTO), 201)]
+    [ProducesResponseType(typeof(ReadUserDTO), 201)]
     [ProducesResponseType(400)]
 
-    public async Task<ActionResult<User>> RegisterUser([FromForm] CreateEditUserDTO dto)
+    public async Task<ActionResult<ReadUserDTO>> RegisterUser([FromForm] CreateEditUserDTO dto)
     {
         var user = await authService.RegisterAsync(dto);
         
         if(user is null)
             return BadRequest("Username already exists");
-        return StatusCode(201, user);
+        return StatusCode(201, new ReadUserDTO
+        {
+            Id = user.Id,
+            Name = user.Name,
+            Role = user.Role
+        });
     }
     
     [HttpPost ("login")]
-    [ProducesResponseType(typeof(CreateEditUserDTO), 200)]
+    [ProducesResponseType(typeof(TokenResponesDTO), 200)]
     [ProducesResponseType(401)]
     public async Task<ActionResult<TokenResponesDTO>> Login(CreateEditUserDTO dto)
     {

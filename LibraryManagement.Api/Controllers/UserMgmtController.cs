@@ -28,7 +28,8 @@ public class UserController(AppDbContext context) : BaseController(context)
         var users = query.Select(u => new ReadUserDTO
         {
             Id = u.Id,
-            Name = u.Name
+            Name = u.Name,
+            Role = u.Role
         });
 
         var totalUsers = await users.CountAsync();
@@ -57,7 +58,8 @@ public class UserController(AppDbContext context) : BaseController(context)
         var user =  new ReadUserDTO
         {
             Id = currUser.Id,
-            Name = currUser.Name
+            Name = currUser.Name,
+            Role = currUser.Role
         };
         return Ok(user);
     }
@@ -74,7 +76,8 @@ public class UserController(AppDbContext context) : BaseController(context)
         var user =  new ReadUserDTO
         {
             Id = currUser.Id,
-            Name = currUser.Name
+            Name = currUser.Name,
+            Role = currUser.Role
         };
         return Ok(user);
     }
