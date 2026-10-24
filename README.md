@@ -49,6 +49,16 @@ This project was developed to practice backend development with ASP.NET Core, En
 
 ## Getting Started
 
+### Default Admin Account
+
+A default admin account is automatically created on application startup, allowing immediate access to admin-restricted endpoints.
+
+**Credentials:**
+- **Username:** `Admin`
+- **Password:** `PassWord`
+
+Use these credentials to log in and obtain a JWT access token.
+
 ### Prerequisites
 
 * .NET SDK
@@ -60,15 +70,29 @@ This project was developed to practice backend development with ASP.NET Core, En
 
    ```bash
    git clone <repository-url>
-   cd <repository-name>
+   cd LibraryManagementApi
    ```
 
-2. Configure the database connection and JWT settings in the application configuration.
+2. Configure the application:
+
+   - Install .NET 10 SDK and SQL Server.
+   - Update the `UserDatabase` connection string in `appsettings.json` to match your SQL Server instance.
+   - Configure the JWT `Token`, `Issuer`, and `Audience` settings. Use a securely stored signing key.
+
+   - To configure the JWT `Token` using the following command is recommended
+   ```bash
+   $bytes = New-Object byte[] 64
+   $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+   $rng.GetBytes($bytes)
+   $rng.Dispose()
+
+   dotnet user-secrets set "AppSettings:Token" ([Convert]::ToBase64String($bytes))
+   ```
 
 3. Apply database migrations:
 
    ```bash
-   dotnet ef database update
+   dotnet ef database update --project LibraryManagement.Api
    ```
 
 4. Run the API:
@@ -76,6 +100,8 @@ This project was developed to practice backend development with ASP.NET Core, En
    ```bash
    dotnet run --project LibraryManagement.Api
    ```
+
+5. Access Swagger UI at `/swagger` or Scalar at `/scalar/v1` when running in the Development environment.
 
 ## API Documentation
 
