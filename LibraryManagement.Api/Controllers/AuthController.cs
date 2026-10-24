@@ -1,5 +1,4 @@
 using LibraryManagement.Api.DTO;
-using LibraryManagement.Api.Models;
 using LibraryManagement.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

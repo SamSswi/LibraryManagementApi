@@ -55,6 +55,17 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+// Seed a default admin user for ease of exploring the API
+// user name: "Admin"; password "PassWord" 
+using var scope = app.Services.CreateScope();
+
+var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+var seeder = new AdminSeeder(authService, context);
+await seeder.SeedAdmin();
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
