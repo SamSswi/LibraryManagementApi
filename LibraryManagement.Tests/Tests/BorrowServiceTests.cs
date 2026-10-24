@@ -4,6 +4,7 @@ using LibraryManagement.Api.DTO;
 using Microsoft.AspNetCore.Mvc;
 using LibraryManagement.Api.GlobalExceptionHandler;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 public class BorrowServiceTests
 {
@@ -26,9 +27,12 @@ public class BorrowServiceTests
         var dto = new BorrowDTO {LoanItems = [new(){BookId = book.Id}]};
         var controller = TestDataFactory.CreateAuthenticatedLoanController(_context, user.Id);
         
-        var result = await controller.Borrow(dto);
+        var actionResult = await controller.Borrow(dto);
+        var result = Assert.IsType<ObjectResult>(actionResult);
 
-        Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(201, result.StatusCode);
+
+        Assert.IsType<ReadLoanResponseDTO>(result.Value);
 
         var loans = await _context.Loan.ToListAsync();
         Assert.NotEmpty(loans);

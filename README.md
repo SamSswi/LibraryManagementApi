@@ -1,8 +1,8 @@
 # Library Management API
 
-An API built with ASP.NET Core for managing books, authors, and library loans.
+A RESTful API built with ASP.NET Core for managing books, authors, and library loans.
 
-This project was developed to practice backend development with ASP.NET Core, Entity Framework Core, JWT authentication, and automated testing.
+This project was developed to practice backend development with ASP.NET Core, Entity Framework Core, JWT authentication, RESTful API design, and automated testing.
 
 ## Technologies
 
@@ -34,6 +34,11 @@ This project was developed to practice backend development with ASP.NET Core, En
 * JWT-based authentication
 * Refresh token support
 * Role-based authorization
+
+### API Design and Error Handling
+
+* RESTful endpoints using appropriate HTTP methods and status codes
+* Global exception handling
 
 ### Testing
 
@@ -86,8 +91,15 @@ dotnet test
 
 The tests cover core authentication, borrowing, and returning functionality, including successful operations and error scenarios.
 
+
+## References & Acknowledgments
+
+* **JWT Authentication:** Adapted from [ASP.NET Core JWT Authentication Tutorial - Patrick God](https://www.youtube.com/watch?v=6EEltKS8AwA).
+* **Global Exception Handling:** Adapted from [Milan Jovanović's article on global error handling](https://milanjovanovic.tech/blog/global-error-handling-in-aspnetcore-from-middleware-to-modern-handlers).
+
+
 ## Project Purpose
 
-This project serves as a practical exercise in building APIs using ASP.NET Core.
+This project serves as a practical exercise in building RESTful APIs using ASP.NET Core.
 
 It focuses on implementing common backend functionality, working with relational databases, handling authentication and authorization, and writing automated tests.

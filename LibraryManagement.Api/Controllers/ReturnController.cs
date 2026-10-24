@@ -29,7 +29,7 @@ public class ReturnController(AppDbContext context) : BaseController(context)
         var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == loanItem.BookId) ?? throw new NotFoundException("Book not Found");
         await AvailableCopiesCalc(book.Id, Operands.Plus);
         await _context.SaveChangesAsync();
-        return StatusCode(204);
+        return NoContent();
     }
 
     [Authorize]
@@ -50,7 +50,7 @@ public class ReturnController(AppDbContext context) : BaseController(context)
         var book = await _context.Book.FirstOrDefaultAsync(b => b.Id == loanItem.BookId) ?? throw new NotFoundException("Book not Found");
         await AvailableCopiesCalc(book.Id, Operands.Plus);
         await _context.SaveChangesAsync();
-        return StatusCode(204);
+        return NoContent();
     }
 
 }

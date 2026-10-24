@@ -33,7 +33,7 @@ public class ReturnServiceTests
         foreach(var li in loanItemsId)
         {
             var result = await controller.ReturnBook(li);
-            Assert.IsType<OkResult>(result);
+            Assert.IsType<NoContentResult>(result);
         }
 
         foreach(var li in _context.LoanItem)
